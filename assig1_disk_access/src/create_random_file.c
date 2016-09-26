@@ -34,7 +34,12 @@ int main(int argc, char **argv) {
 	long total_bytes= atol(argv[2]);
 	long block_size= atol(argv[3]);
 
+	//init buffer
 	char buffer[block_size];
+	memset(buffer, 0, sizeof(buffer));
+
+	//Write to file
+	FILE *fp = fopen(filename, "w");
 
 	//Count time - start
 	struct timeb t;
@@ -42,14 +47,13 @@ int main(int argc, char **argv) {
 	long before_in_ms = t.time * 1000 + t.millitm;
 	printf("Start time mm: %ld \n", before_in_ms);
 
-	//Write to file
-	FILE *fp = fopen(filename, "w");
 	while(total_bytes >= block_size)
 	{
 		total_bytes -= block_size;
 		random_array(buffer, block_size);
 		fwrite(buffer, sizeof(char), block_size, fp);
 		fflush(fp);
+		memset(buffer, 0, sizeof(buffer));
 	}
 	if(total_bytes > 0)
 	{
@@ -57,13 +61,14 @@ int main(int argc, char **argv) {
 		fwrite(buffer, sizeof(char), total_bytes, fp);
 		fflush(fp);
 	}
-	fclose(fp);
 
 	//Count time - end
 	ftime(&t);
 	long after_in_ms = t.time * 1000 + t.millitm;
 	printf("Stop time mm: %ld \n", after_in_ms);
 	printf("Difference mm: %ld \n", after_in_ms - before_in_ms);
+
+	fclose(fp);
 
 	return EXIT_SUCCESS;
 }
