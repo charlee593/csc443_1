@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <sys/timeb.h>
 
-/* Function prototypes */
+/* Function prototypes  */
 void random_array(char *array, long bytes);
 
 /**
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
 	//Write to file
 	FILE *fp = fopen(filename, "w");
-	while(total_bytes > block_size)
+	while(total_bytes >= block_size)
 	{
 		total_bytes -= block_size;
 		random_array(buffer, block_size);
