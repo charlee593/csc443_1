@@ -1,9 +1,9 @@
-/*
- ============================================================================
- Name        : get_histogram.c
- Author      : Carlos Lee
- ============================================================================
- */
+///*
+// ============================================================================
+// Name        : get_histogram.c
+// Author      : Carlos Lee
+// ============================================================================
+// */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,49 +29,47 @@ int get_histogram(
  *
  * returns: -1 if there is an error.
  */
+#include <sys/stat.h>
+
 int get_histogram(FILE *file_ptr, long hist[], int block_size, long *milliseconds, long *total_bytes_read)
 {
 	//Init buffer
 	char buffer[block_size];
 	memset(buffer, 0, sizeof(buffer));
+	*total_bytes_read = 0;
 
-	//Count time - start
+	// init time
 	struct timeb t;
-	ftime(&t);
-	long before_in_ms = t.time * 1000 + t.millitm;
+	long before_in_ms = 0;
+	long current_in_ms = 0;
 
-	while(*total_bytes_read >= (long)block_size)
+	int current_byte_read = -1;
+	while(current_byte_read != 0)
 	{
-		*total_bytes_read -= block_size;
-		fread(buffer, sizeof(char), block_size, file_ptr);
+		ftime(&t);
+		before_in_ms = t.time * 1000 + t.millitm;
+		current_byte_read = fread(buffer, sizeof(char), block_size, file_ptr);
+		ftime(&t);
+		current_in_ms = t.time * 1000 + t.millitm;
+		*milliseconds += (current_in_ms - before_in_ms);
+
 		int i;
 		for(i = 0; i < block_size; i++)
 		{
 			hist[buffer[i] - 'A'] ++;
 		}
 		memset(buffer, 0, sizeof(buffer));
-	}
-	if(*total_bytes_read > 0)
-	{
-		fread(buffer, sizeof(char), *total_bytes_read, file_ptr);
-		int i;
-		for(i = 0; i < *total_bytes_read; i++)
-		{
-			hist[buffer[i] - 'A'] ++;
-		}
+
+		*total_bytes_read += current_byte_read;
 	}
 
-	//Count time - end
-	ftime(&t);
-	long after_in_ms = t.time * 1000 + t.millitm;
-	*milliseconds = after_in_ms - before_in_ms;
 
 	return -1;
 }
 
 int main(int argc, char **argv) {
 	long hist[26];
-	long milliseconds;
+	long milliseconds = 0;
 	long filelen;
 
 	//Arguments
@@ -83,9 +81,6 @@ int main(int argc, char **argv) {
 
 	//Init variable
 	memset(hist, 0, sizeof(hist));
-	fseek(fp, 0L, SEEK_END);
-	filelen = ftell(fp);
-	rewind(fp);
 
 	/**
 	 * Compute the histogram using 2K buffers
